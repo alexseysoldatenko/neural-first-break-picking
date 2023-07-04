@@ -13,7 +13,9 @@ class Pick():
     def get_pisk_as_points_to_napari(self):
         return np.concatenate([self.pick_time.reshape(-1,1), self.trace_numbers.reshape(-1,1)], axis = 1)
 
-
+# TODO:
+def read_pick_excel():
+    pass
 
 def read_pick_kingdom(path_to_pick, dt = 0.000125,**qwargs):
     with open(path_to_pick, 'r') as f:

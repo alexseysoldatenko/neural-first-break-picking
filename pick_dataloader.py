@@ -2,9 +2,6 @@ import torch
 import os
 import random
 
-
-
-
 class Dataset(torch.utils.data.Dataset):
     def __init__(self, data_folder_path):
         'Initialization'
