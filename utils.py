@@ -76,8 +76,8 @@ if __name__ == '__main__':
     path_to_data = 'C:\\Users\\alexsey\\Desktop\\проекты\\пикировка первых вступлений грант\\данные\\Line3.sgy'
     # view_data(path_to_data, path_to_pick, dt = 0.0005,time_shift = 5)
     data = load_data(path_to_data)
-    x_folder = 'C:\\Users\\alexsey\\Desktop\\x'
-    y_folder = 'C:\\Users\\alexsey\\Desktop\\y'
+    # x_folder = 'C:\\Users\\alexsey\\Desktop\\x'
+    # y_folder = 'C:\\Users\\alexsey\\Desktop\\y'
     pick = read_pick_kingdom(path_to_pick, dt = 0.0005,time_shift = 5)
     from_data_pick_to_torch_tensor(10, 64, data, pick, x_folder=x_folder, y_folder=y_folder)
     # from_data_pick_to_torch_tensor
