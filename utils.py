@@ -1,8 +1,10 @@
 import numpy as np
+import pandas as pd
 import torch
 import segyio
 import napari
 import os
+import matplotlib.pyplot as plt
 
 class Pick():
     def __init__(self, dt, trace_numbers, pick_time, shift = 0, time_shift = 0):
@@ -10,12 +12,21 @@ class Pick():
         self.trace_numbers = trace_numbers - trace_numbers[0] - shift
         self.pick_time = pick_time - time_shift
     
-    def get_pisk_as_points_to_napari(self):
+    def get_pick_as_points_to_napari(self):
         return np.concatenate([self.pick_time.reshape(-1,1), self.trace_numbers.reshape(-1,1)], axis = 1)
 
-# TODO:
-def read_pick_excel():
-    pass
+def read_pick_excel(excel_path,**qwargs):
+    raw_data = pd.read_excel(excel_path)
+    trace_number = np.array(raw_data['TRACENO'])
+    pick_time = np.array(raw_data['FBPICK']/raw_data['dt'], dtype=np.int32)
+
+    dt = raw_data['dt'].iloc[0]
+
+    if 'time_shift' in qwargs:
+        return Pick(dt, trace_number, pick_time, time_shift=qwargs['time_shift'])
+    else:
+        return Pick(dt, trace_number, pick_time)
+
 
 def read_pick_kingdom(path_to_pick, dt = 0.000125,**qwargs):
     with open(path_to_pick, 'r') as f:
@@ -30,7 +41,10 @@ def read_pick_kingdom(path_to_pick, dt = 0.000125,**qwargs):
             else:
                 trace_number.append(int(float(split_trace[1])))
                 pick_time.append(float(split_trace[2]))
-    return Pick(dt, np.array(trace_number), (np.array(pick_time)/ dt).astype(np.int32), time_shift=qwargs['time_shift'])
+    if 'time_shift' in qwargs:
+        return Pick(dt, np.array(trace_number), (np.array(pick_time)/ dt).astype(np.int32), time_shift=qwargs['time_shift'])
+    else:
+        return Pick(dt, np.array(trace_number), (np.array(pick_time)/ dt).astype(np.int32))
     
 def from_data_pick_to_torch_tensor(number_of_images, image_size, data, pick: Pick, bin_size = 64, 
                                    x_folder = 'x',y_folder='y',prefix=''):
@@ -64,7 +78,10 @@ def load_data(path_to_data):
 
 def view_data(path_to_data, pick, dt = 0.000125,**qwargs):
     data = load_data(path_to_data)
-    pick = read_pick_kingdom(pick, dt = dt, qwargs = qwargs).get_pisk_as_points_to_napari()
+    if 'kingdom' in qwargs:
+        pick = read_pick_kingdom(pick, dt = dt, **qwargs).get_pick_as_points_to_napari()
+    if 'excel' in qwargs:
+        pick = read_pick_excel(pick, **qwargs).get_pick_as_points_to_napari()
     
     viewer = napari.view_image(data)
     viewer.add_points(pick,edge_color = 'red', size = 3,face_color = 'red')
@@ -72,13 +89,16 @@ def view_data(path_to_data, pick, dt = 0.000125,**qwargs):
 
 if __name__ == '__main__':
    
-    path_to_pick = 'C:\\Users\\alexsey\\Desktop\\проекты\\пикировка первых вступлений грант\\пикировки\\Line3.dat'
-    path_to_data = 'C:\\Users\\alexsey\\Desktop\\проекты\\пикировка первых вступлений грант\\данные\\Line3.sgy'
-    # view_data(path_to_data, path_to_pick, dt = 0.0005,time_shift = 5)
-    data = load_data(path_to_data)
+    path_to_pick = 'C:\\Users\\alexsey\\Desktop\\проекты\\пикировка первых вступлений грант\\пикировки\\100.xlsx'
+    path_to_data = 'C:\\Users\\alexsey\\Desktop\\проекты\\пикировка первых вступлений грант\\данные\\WSBS22_3D_line000_geom_sou1rec2.sgy'
+    view_data(path_to_data, path_to_pick, dt = 1, excel = True)#,time_shift=70
+
+
+
+
+    # data = load_data(path_to_data)
     # x_folder = 'C:\\Users\\alexsey\\Desktop\\x'
     # y_folder = 'C:\\Users\\alexsey\\Desktop\\y'
-    pick = read_pick_kingdom(path_to_pick, dt = 0.0005,time_shift = 5)
-    from_data_pick_to_torch_tensor(10, 64, data, pick, x_folder=x_folder, y_folder=y_folder)
-    # from_data_pick_to_torch_tensor
-    # read_pick_kingdom(path_to_pick)
+    # pick = read_pick_kingdom(path_to_pick, dt = 0.0005,time_shift = 5)
+    # for i in [64,32,16,128,256]:
+    #     from_data_pick_to_torch_tensor(100, i, data, pick, x_folder=x_folder, y_folder=y_folder, prefix =f"Line3_{i}")
